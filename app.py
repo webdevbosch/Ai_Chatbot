@@ -1,74 +1,62 @@
 import streamlit as st
-from transformers import pipeline
-import requests
-import os
+import openai
+import speech_recognition as sr
 from gtts import gTTS
+import os
+import time
+from pydub import AudioSegment
+from pydub.playback import play
 
-# Load Hugging Face API
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
-HEADERS = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}
+# OpenAI API Key (Set your own API Key)
+openai.api_key = "YOUR_OPENAI_API_KEY"
 
-# Knowledge Base
-knowledge_base = {
-    "bofalgan": "Bofalgan Plus fights pain in two ways: Paracetamol blocks pain signals, while Ibuprofen targets pain at the source.",
-    "dosage": "Adults above 50kg: 1000mg Paracetamol + 300mg Ibuprofen every 6 hours as necessary.",
-    "safety": "The safety profile of Bofalgan Plus is comparable to that of intravenous paracetamol or ibuprofen alone.",
-    "opioids": "Bofalgan Plus reduces opioid dependency by offering superior analgesic effects."
-}
+# Function to generate AI response
+def chat_with_ai(user_input):
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    return response["choices"][0]["message"]["content"]
 
-def get_response(question):
-    """Generate response from knowledge base or AI model"""
-    for key in knowledge_base:
-        if key in question.lower():
-            return knowledge_base[key]
+# Function to convert text to speech
+def text_to_speech(response_text):
+    tts = gTTS(text=response_text, lang="en")
+    audio_file = "response.mp3"
+    tts.save(audio_file)
+    return audio_file
 
-    # Use Hugging Face API for AI-generated responses
-    response = requests.post(HUGGINGFACE_API_URL, headers=HEADERS, json={"inputs": question})
-    if response.status_code == 200:
-        return response.json()[0]["generated_text"]
-    return "I'm sorry, I couldn't process that."
-
-def generate_speech(response_text, language="en"):
-    """Convert chatbot response to speech using gTTS"""
-    tts = gTTS(response_text, lang=language)
-    speech_file = "response.mp3"
-    tts.save(speech_file)
-    return speech_file
+# Function to recognize speech from microphone
+def speech_to_text():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("Listening... Speak now!")
+        try:
+            audio = recognizer.listen(source, timeout=5)
+            user_text = recognizer.recognize_google(audio)
+            return user_text
+        except sr.UnknownValueError:
+            return "Sorry, I couldn't understand."
+        except sr.RequestError:
+            return "API Error. Please try again."
 
 # Streamlit UI
-st.title("🗣️ AI Chatbot (Speaks & Listens!)")
-st.write("Ask me about **Bofalgan Plus** (Supports English & Urdu)")
+st.title("🎙️ AI Chatbot with Voice")
+st.write("Chat with AI using text or voice!")
 
-# Inject HTML for voice input
-st.components.v1.html(
-    """
-    <button onclick="startSpeechRecognition()">🎙️ Speak</button>
-    <input type="text" id="userInput" style="width:100%; padding:10px; font-size:16px; margin-top:10px;" placeholder="Speak or type here...">
+# Voice Input
+if st.button("🎤 Speak"):
+    user_query = speech_to_text()
+    st.text(f"**You said:** {user_query}")
+else:
+    user_query = st.text_input("Type your message:")
+
+# Process User Query
+if st.button("Send") and user_query:
+    ai_response = chat_with_ai(user_query)
     
-    <script>
-        function startSpeechRecognition() {
-            let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-GB';  // Change to 'ur-PK' for Urdu
-            recognition.start();
-            
-            recognition.onresult = function(event) {
-                document.getElementById("userInput").value = event.results[0][0].transcript;
-                document.getElementById("sendButton").click();
-            };
-        }
-    </script>
-    """,
-    height=100
-)
-
-user_input = st.text_input("Or Type Here:", "")
-
-if user_input:
-    response = get_response(user_input)
-    st.text_area("Chatbot:", value=response, height=100)
-
-    # Generate speech and play
-    speech_file = generate_speech(response, "en")
-    st.audio(speech_file, format="audio/mp3")
-
-st.write("🚀 **Powered by Hugging Face AI & Streamlit Cloud**")
+    # Display AI Response
+    st.success(f"🤖 AI: {ai_response}")
+    
+    # Convert Response to Speech
+    audio_path = text_to_speech(ai_response)
+    st.audio(audio_path, format="audio/mp3")
