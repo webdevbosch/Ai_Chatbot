@@ -1,10 +1,11 @@
 import streamlit as st
-from transformers import pipeline
+import requests
 
-# Load a smaller, more efficient AI model
-nlp_model = pipeline("text-generation", model="facebook/blenderbot-400M-distill")
+# Hugging Face API Endpoint (Free Tier)
+API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
+HEADERS = {"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"}  # Replace with your API Key
 
-# Bofalgan Plus Knowledge Base
+# Knowledge Base (Predefined Answers for Common Questions)
 knowledge_base = {
     "bofalgan": "Bofalgan Plus fights pain in two ways: Paracetamol blocks pain signals, while Ibuprofen targets pain at the source.",
     "dosage": "Adults above 50kg: 1000mg Paracetamol + 300mg Ibuprofen every 6 hours as necessary.",
@@ -13,25 +14,26 @@ knowledge_base = {
 }
 
 def get_response(question):
-    """Generate a response based on the knowledge base or AI model."""
+    """Generate a response using the knowledge base or Hugging Face API."""
     for key in knowledge_base:
         if key in question.lower():
             return knowledge_base[key]
-
-    response = nlp_model(question, max_length=1000, do_sample=True)
-    return response[0]['generated_text']
+    
+    # Request AI response from Hugging Face
+    payload = {"inputs": question}
+    response = requests.post(API_URL, headers=HEADERS, json=payload)
+    if response.status_code == 200:
+        return response.json()["generated_text"]
+    else:
+        return "I'm sorry, but I couldn't generate a response right now."
 
 # Streamlit UI
-st.title("\U0001F4AC AI Chatbot - Bofalgan Plus")
+st.title("💬 AI Chatbot - Bofalgan Plus")
 st.write("Ask me anything about **Bofalgan Plus** (Supports English & Urdu)")
 
 user_input = st.text_input("You:", "")
-
 if user_input:
     response = get_response(user_input)
     st.text_area("Chatbot:", value=response, height=100)
 
-    # Text-to-Speech (TTS)
-    st.audio(f"https://api.voicerss.org/?key=YOUR_VOICE_RSS_KEY&hl=en-us&src={response}")
-
-st.write("\U0001F680 **Powered by Hugging Face AI & Streamlit Cloud**")
+st.write("🚀 **Powered by Hugging Face API & Streamlit Cloud**")
