@@ -1,8 +1,8 @@
 import streamlit as st
 from transformers import pipeline
 
-# Load Hugging Face model for text generation (Free)
-nlp_model = pipeline("text-generation", model="microsoft/DialoGPT-medium")
+# Load a smaller, more efficient AI model
+nlp_model = pipeline("text-generation", model="facebook/blenderbot-400M-distill")
 
 # Bofalgan Plus Knowledge Base
 knowledge_base = {
@@ -17,12 +17,12 @@ def get_response(question):
     for key in knowledge_base:
         if key in question.lower():
             return knowledge_base[key]
-    
+
     response = nlp_model(question, max_length=1000, do_sample=True)
     return response[0]['generated_text']
 
 # Streamlit UI
-st.title("💬 AI Chatbot - Bofalgan Plus")
+st.title("\U0001F4AC AI Chatbot - Bofalgan Plus")
 st.write("Ask me anything about **Bofalgan Plus** (Supports English & Urdu)")
 
 user_input = st.text_input("You:", "")
@@ -34,4 +34,4 @@ if user_input:
     # Text-to-Speech (TTS)
     st.audio(f"https://api.voicerss.org/?key=YOUR_VOICE_RSS_KEY&hl=en-us&src={response}")
 
-st.write("🚀 **Powered by Hugging Face AI & Streamlit Cloud**")
+st.write("\U0001F680 **Powered by Hugging Face AI & Streamlit Cloud**")
