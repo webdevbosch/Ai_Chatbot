@@ -1,7 +1,6 @@
 transformers
 streamlit
 gtts
-streamlit
 openai
 pydub
 speechrecognition
