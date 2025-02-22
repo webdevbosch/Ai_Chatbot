@@ -43,7 +43,18 @@ st.write("Chat with AI using text or voice!")
 
 # Voice Input
 if st.button("🎤 Speak"):
-    st.session_state.user_query = speech_to_text()
+    audio_bytes = st.audio_input("🎤 Speak")
+    if audio_bytes:
+        recognizer = sr.Recognizer()
+        audio_data = sr.AudioFile(audio_bytes)
+        with audio_data as source:
+            audio = recognizer.record(source)
+        try:
+            st.session_state.user_query = recognizer.recognize_google(audio)
+        except sr.UnknownValueError:
+            st.session_state.user_query = "Sorry, I couldn't understand."
+        except sr.RequestError:
+            st.session_state.user_query = "API Error. Please try again."
     st.text(f"**You said:** {st.session_state.user_query}")
 else:
     st.session_state.user_query = st.text_input("Type your message:", st.session_state.user_query)
