@@ -32,27 +32,40 @@ def speech_to_text_from_audio(audio_bytes):
     except sr.RequestError:
         return "API Error. Please try again."
 
-# Initialize session state for user_query
+# Initialize session state for user_query and audio_bytes
 if 'user_query' not in st.session_state:
     st.session_state.user_query = ""
+if 'user_input' not in st.session_state:
+    st.session_state.user_input = ""
+if 'audio_bytes' not in st.session_state:
+    st.session_state.audio_bytes = None
 
 # Streamlit UI
 st.title("🎙️ AI Chatbot with Voice")
 st.write("Chat with AI using text or voice!")
 
 # Voice Input
-if st.button("🎤 Speak"):
-    audio_bytes = st.audio_input("Press the mic button to start")
-    if audio_bytes:
-        st.session_state.user_query = speech_to_text_from_audio(audio_bytes)
+st.session_state.audio_bytes = st.audio_input("Press the mic button to start")
+
+# Text Input
+st.session_state.user_input = st.text_input("Type your message:", st.session_state.user_input)
+
+# Speech to Text
+if st.session_state.audio_bytes:
+    st.session_state.user_query = speech_to_text_from_audio(st.session_state.audio_bytes)
     st.text(f"**You said:** {st.session_state.user_query}")
-else:
-    st.session_state.user_query = st.text_input("Type your message:", st.session_state.user_query)
+    st.session_state.audio_bytes = None
+    st.session_state.user_input = ""
+
+# Text input to query
+if st.session_state.user_input:
+    st.session_state.user_query = st.session_state.user_input
 
 # Process User Query
 if st.button("Send") and st.session_state.user_query:
     ai_response = chat_with_ai(st.session_state.user_query)
     st.session_state.user_query = ""
+    st.session_state.user_input = ""
 
     # Display AI Response
     st.success(f"🤖 AI: {ai_response}")
