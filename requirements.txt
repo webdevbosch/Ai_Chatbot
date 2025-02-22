@@ -6,3 +6,4 @@ openai
 gtts
 pydub
 speechrecognition
+pyaudio
