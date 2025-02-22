@@ -42,7 +42,7 @@ st.write("Chat with AI using text or voice!")
 
 # Voice Input
 if st.button("🎤 Speak"):
-    audio_bytes = st.audio_input("🎤 Speak")
+    audio_bytes = st.audio_input("Press the mic button to start")
     if audio_bytes:
         st.session_state.user_query = speech_to_text_from_audio(audio_bytes)
     st.text(f"**You said:** {st.session_state.user_query}")
