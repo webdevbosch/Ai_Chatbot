@@ -1,7 +1,5 @@
 transformers
 streamlit
-gtts
-streamlit
 openai
 gtts
 pydub
