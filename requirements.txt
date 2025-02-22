@@ -3,7 +3,6 @@ streamlit
 gtts
 streamlit
 openai
-gtts
 pydub
 speechrecognition
 pyaudio
