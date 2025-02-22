@@ -4,7 +4,7 @@ from gtts import gTTS
 from openai import OpenAI
 
 # OpenAI API Key (Set your own API Key)
-client = OpenAI(api_key=None)
+client = OpenAI(api_key="")
 
 # Function to generate AI response
 def chat_with_ai(user_input):
@@ -51,6 +51,7 @@ else:
 # Process User Query
 if st.button("Send") and st.session_state.user_query:
     ai_response = chat_with_ai(st.session_state.user_query)
+    st.session_state.user_query = ""
 
     # Display AI Response
     st.success(f"🤖 AI: {ai_response}")
