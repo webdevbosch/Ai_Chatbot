@@ -19,19 +19,18 @@ def text_to_speech(response_text):
     tts.save(audio_file)
     return audio_file
 
-# Function to recognize speech from microphone
-def speech_to_text():
+# Function to recognize speech from audio bytes
+def speech_to_text_from_audio(audio_bytes):
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("Listening... Speak now!")
-        try:
-            audio = recognizer.listen(source, timeout=5)
-            user_text = recognizer.recognize_google(audio)
-            return user_text
-        except sr.UnknownValueError:
-            return "Sorry, I couldn't understand."
-        except sr.RequestError:
-            return "API Error. Please try again."
+    audio_data = sr.AudioFile(audio_bytes)
+    with audio_data as source:
+        audio = recognizer.record(source)
+    try:
+        return recognizer.recognize_google(audio)
+    except sr.UnknownValueError:
+        return "Sorry, I couldn't understand."
+    except sr.RequestError:
+        return "API Error. Please try again."
 
 # Initialize session state for user_query
 if 'user_query' not in st.session_state:
@@ -45,16 +44,7 @@ st.write("Chat with AI using text or voice!")
 if st.button("🎤 Speak"):
     audio_bytes = st.audio_input("🎤 Speak")
     if audio_bytes:
-        recognizer = sr.Recognizer()
-        audio_data = sr.AudioFile(audio_bytes)
-        with audio_data as source:
-            audio = recognizer.record(source)
-        try:
-            st.session_state.user_query = recognizer.recognize_google(audio)
-        except sr.UnknownValueError:
-            st.session_state.user_query = "Sorry, I couldn't understand."
-        except sr.RequestError:
-            st.session_state.user_query = "API Error. Please try again."
+        st.session_state.user_query = speech_to_text_from_audio(audio_bytes)
     st.text(f"**You said:** {st.session_state.user_query}")
 else:
     st.session_state.user_query = st.text_input("Type your message:", st.session_state.user_query)
