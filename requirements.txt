@@ -1,7 +1,7 @@
 transformers
 streamlit
-openai
 gtts
+openai
 pydub
 speechrecognition
 pyaudio
