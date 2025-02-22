@@ -1,22 +1,16 @@
 import streamlit as st
-import openai
 import speech_recognition as sr
 from gtts import gTTS
-import os
-import time
-from pydub import AudioSegment
-from pydub.playback import play
+from openai import OpenAI
 
 # OpenAI API Key (Set your own API Key)
-openai.api_key = "YOUR_OPENAI_API_KEY"
+client = OpenAI(api_key=None)
 
 # Function to generate AI response
 def chat_with_ai(user_input):
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": user_input}]
-    )
-    return response["choices"][0]["message"]["content"]
+    response = client.chat.completions.create(model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": user_input}])
+    return response.choices[0].message.content
 
 # Function to convert text to speech
 def text_to_speech(response_text):
@@ -39,24 +33,28 @@ def speech_to_text():
         except sr.RequestError:
             return "API Error. Please try again."
 
+# Initialize session state for user_query
+if 'user_query' not in st.session_state:
+    st.session_state.user_query = ""
+
 # Streamlit UI
 st.title("🎙️ AI Chatbot with Voice")
 st.write("Chat with AI using text or voice!")
 
 # Voice Input
 if st.button("🎤 Speak"):
-    user_query = speech_to_text()
-    st.text(f"**You said:** {user_query}")
+    st.session_state.user_query = speech_to_text()
+    st.text(f"**You said:** {st.session_state.user_query}")
 else:
-    user_query = st.text_input("Type your message:")
+    st.session_state.user_query = st.text_input("Type your message:", st.session_state.user_query)
 
 # Process User Query
-if st.button("Send") and user_query:
-    ai_response = chat_with_ai(user_query)
-    
+if st.button("Send") and st.session_state.user_query:
+    ai_response = chat_with_ai(st.session_state.user_query)
+
     # Display AI Response
     st.success(f"🤖 AI: {ai_response}")
-    
+
     # Convert Response to Speech
     audio_path = text_to_speech(ai_response)
     st.audio(audio_path, format="audio/mp3")
